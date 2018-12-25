@@ -53,6 +53,7 @@ public class CloudPubSubPullTransport extends ThrottleableTransport {
    public static final String CPS_MESSAGE_SIZE = "message_size";
    // public static final String CPS_INTERVAL = "interval";
    public static final String CPS_SUBSCRIPTION_TOPIC = "topic";
+   public static final String CPS_SOURCE_NAME = "source_name";
 
    private final Configuration configuration;
    private final LocalMetricRegistry localRegistry;
@@ -262,7 +263,10 @@ public class CloudPubSubPullTransport extends ThrottleableTransport {
          // r.addField(new NumberField(CPS_INTERVAL, "Interval", 10, "Pulling interval in
          // seconds",
          // ConfigurationField.Optional.NOT_OPTIONAL));
-         return r;
+ 
+         r.addField(new TextField(CPS_SOURCE_NAME, "Source Name", "",
+         "Override source name. (default gcp-pubsub)", ConfigurationField.Optional.OPTIONAL));
+  return r;
       }
    }
 }

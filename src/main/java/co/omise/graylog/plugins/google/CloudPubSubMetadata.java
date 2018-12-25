@@ -33,7 +33,7 @@ public class CloudPubSubMetadata implements PluginMetaData {
 
     @Override
     public Version getVersion() {
-        return Version.fromPluginProperties(getClass(), PLUGIN_PROPERTIES, "version", Version.from(1, 0, 0));
+        return Version.fromPluginProperties(getClass(), PLUGIN_PROPERTIES, "version", Version.from(1, 0, 1));
     }
 
     @Override

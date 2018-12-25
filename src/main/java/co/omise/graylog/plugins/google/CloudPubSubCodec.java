@@ -15,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.graylog2.plugin.Message;
 import org.graylog2.plugin.configuration.Configuration;
 import org.graylog2.plugin.configuration.ConfigurationRequest;
+import org.graylog2.plugin.inputs.MessageInput;
 import org.graylog2.plugin.inputs.annotations.ConfigClass;
 import org.graylog2.plugin.inputs.annotations.FactoryClass;
 import org.graylog2.plugin.inputs.codecs.AbstractCodec;
@@ -92,7 +93,7 @@ public class CloudPubSubCodec extends AbstractCodec {
         }
         if (message == null)
             return null;
-        final Message result = new Message(message, "gcp-pubsub", timestamp);
+        final Message result = new Message(message, configuration.getString(CloudPubSubPullTransport.CPS_SOURCE_NAME, "gcp-pubsub"), timestamp);
         result.addField(CloudPubSubPullTransport.CPS_SUBSCRIPTION_TOPIC, configuration.getString(CloudPubSubPullTransport.CPS_SUBSCRIPTION_TOPIC, ""));
         return result;
     }

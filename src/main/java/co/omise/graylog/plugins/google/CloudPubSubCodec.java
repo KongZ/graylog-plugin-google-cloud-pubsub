@@ -15,13 +15,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.graylog2.plugin.Message;
 import org.graylog2.plugin.configuration.Configuration;
 import org.graylog2.plugin.configuration.ConfigurationRequest;
-import org.graylog2.plugin.inputs.MessageInput;
 import org.graylog2.plugin.inputs.annotations.ConfigClass;
 import org.graylog2.plugin.inputs.annotations.FactoryClass;
 import org.graylog2.plugin.inputs.codecs.AbstractCodec;
 import org.graylog2.plugin.inputs.codecs.Codec;
 import org.graylog2.plugin.journal.RawMessage;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,7 +81,7 @@ public class CloudPubSubCodec extends AbstractCodec {
                 // Timestamp.
                 JsonNode value = node.path("timestamp");
                 if (value.isTextual()) {
-                  timestamp = ISODateTimeFormat.dateTime().parseDateTime(value.asText());
+                  timestamp = ISODateTimeFormat.dateTime().withZone(DateTimeZone.UTC).parseDateTime(value.asText());
                 }
             } catch (final Exception e) {
                 LOG.error("Could not parse JSON, first 400 characters: "

@@ -30,13 +30,11 @@ public class CloudPubSubCodec extends AbstractCodec {
     public static final String NAME = "CloudPubSubCodec";
     private static final Logger LOG = LoggerFactory.getLogger(CloudPubSubCodec.class);
 
-    private final Configuration configuration;
     private final ObjectMapper objectMapper;
 
     @Inject
     public CloudPubSubCodec(@Assisted Configuration configuration) {
         super(configuration);
-        this.configuration = configuration;
         this.objectMapper = new ObjectMapper().enable(JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS)
                 .enable(JsonParser.Feature.IGNORE_UNDEFINED);
     }
@@ -83,6 +81,10 @@ public class CloudPubSubCodec extends AbstractCodec {
                 if (value.isTextual()) {
                   timestamp = ISODateTimeFormat.dateTime().withZone(DateTimeZone.UTC).parseDateTime(value.asText());
                 }
+                if (LOG.isDebugEnabled()) {
+                    value = node.path("insertId");
+                    LOG.debug("Insert ID : {}", value.asText());
+                }
             } catch (final Exception e) {
                 LOG.error("Could not parse JSON, first 400 characters: "
                         + StringUtils.abbreviate(message, 403), e);
@@ -93,8 +95,7 @@ public class CloudPubSubCodec extends AbstractCodec {
         }
         if (message == null)
             return null;
-        final Message result = new Message(message, configuration.getString(CloudPubSubPullTransport.CPS_SOURCE_NAME, "gcp-pubsub"), timestamp);
-        result.addField(CloudPubSubPullTransport.CPS_SUBSCRIPTION_TOPIC, configuration.getString(CloudPubSubPullTransport.CPS_SUBSCRIPTION_TOPIC, ""));
+        Message result = new Message(message, "gcloud-pubsub", timestamp);
         return result;
     }
 

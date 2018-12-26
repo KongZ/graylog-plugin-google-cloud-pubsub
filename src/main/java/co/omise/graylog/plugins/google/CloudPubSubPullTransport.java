@@ -3,6 +3,8 @@ package co.omise.graylog.plugins.google;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.inject.Inject;
 
@@ -62,6 +64,15 @@ public class CloudPubSubPullTransport extends ThrottleableTransport {
 
    private Subscriber subscriber = null;
 
+   // ############
+   // Use BlockingQueue to manage Graylog processing
+   // ############
+   // private final BlockingQueue<PubsubMessage> blockingQueue = new
+   // LinkedBlockingDeque<>();
+   // private final ExecutorService executor;
+   // private Future<?> pullTaskFuture = null;
+   // private volatile boolean running = false;
+
    // private SubscriberStub subscriberStub = null;
    // private final ScheduledExecutorService executor;
    // private ScheduledFuture<?> pullTaskFuture = null;
@@ -75,6 +86,14 @@ public class CloudPubSubPullTransport extends ThrottleableTransport {
       this.localRegistry = localRegistry;
       this.serverEventBus = serverEventBus;
       this.serverStatus = serverStatus;
+      // ############
+      // Use BlockingQueue to manage Graylog processing
+      // ############
+      // this.executor = Executors.newSingleThreadExecutor(new
+      // ThreadFactoryBuilder().setDaemon(true).setNameFormat("cloud-pubsub-pull%d")
+      // .setUncaughtExceptionHandler((t, e) -> LOG.error("Uncaught exception in Cloud
+      // Pub/Sub Pull", e)) .build());
+
       // this.executor = Executors.newScheduledThreadPool(1,
       // new
       // ThreadFactoryBuilder().setDaemon(true).setNameFormat("cloud-pubsub-pull%d")
@@ -93,6 +112,7 @@ public class CloudPubSubPullTransport extends ThrottleableTransport {
       ProjectSubscriptionName projectSubscription = ProjectSubscriptionName.of(configuration.getString(CPS_PROJECT_ID),
             configuration.getString(CPS_SUBSCRIPTION_NAME));
       final String subscriptionTopic = projectSubscription.toString();
+      configuration.setString(CPS_SUBSCRIPTION_TOPIC, subscriptionTopic);
       // Instantiate an asynchronous message receiver
       MessageReceiver receiver = new MessageReceiver() {
          @Override
@@ -100,9 +120,15 @@ public class CloudPubSubPullTransport extends ThrottleableTransport {
             // handle incoming message, then ack/nack the received message
             // LOG.info("async: [id={}]{}", message.getMessageId(),
             // message.getData().toStringUtf8());
+            LOG.info("Pubsub ID : {}", message.getMessageId());
             input.processRawMessage(new RawMessage(message.getData().toByteArray()));
-            // messages.offer(message);
             consumer.ack();
+
+            // if (blockingQueue.offer(message)) {
+            // consumer.ack();
+            // } else {
+            // consumer.nack();
+            // }
          }
       };
       try (InputStream credential = new FileInputStream(configuration.getString(CPS_CREDENTIAL_FILE))) {
@@ -114,6 +140,13 @@ public class CloudPubSubPullTransport extends ThrottleableTransport {
                .build();
          CredentialsProvider credentialsProvider = FixedCredentialsProvider
                .create(ServiceAccountCredentials.fromStream(credential));
+         if (subscriber != null && subscriber.isRunning()) {
+            try {
+               subscriber.stopAsync().awaitTerminated(1, TimeUnit.MINUTES);
+            } catch (TimeoutException e) {
+               LOG.error("Unable to terminate previous subscriber {}", e.getMessage());
+            }
+         }
          subscriber = Subscriber.newBuilder(subscriptionTopic, receiver).setExecutorProvider(executorProvider)
                .setFlowControlSettings(flowControlSettings).setCredentialsProvider(credentialsProvider).build();
          subscriber.addListener(new Subscriber.Listener() {
@@ -137,12 +170,34 @@ public class CloudPubSubPullTransport extends ThrottleableTransport {
                LOG.warn("[state={}] {} is failed ({})", from.toString(), subscriptionTopic, failure.toString());
             }
          }, MoreExecutors.directExecutor());
-         subscriber.startAsync();
+         subscriber.startAsync().awaitRunning();
       } catch (IOException e) {
          LOG.error("Error while reading credentials {}", e.getMessage());
       }
+      // ############
+      // Use BlockingQueue to manage Graylog processing
+      // ############
+      // running = true;
+      // executor.submit(new Runnable() {
+      // @Override
+      // public void run() {
+      // while (running) {
+      // try {
+      // PubsubMessage message = blockingQueue.take();
+      // LOG.info("Pubsub ID : {}", message.getMessageId());
+      // RawMessage rawMessage = new RawMessage(message.getData().toByteArray());
+      // input.processRawMessage(rawMessage);
+      // } catch (InterruptedException e) {
+      // LOG.error("{}", e.getMessage());
+      // }
+      // }
+      // }
+      // });
       // executor.submit(task);
-      // // Synchronized Pull
+
+      // ############
+      // Synchronized Pull
+      // ############
       // try (InputStream credential = new
       // FileInputStream(configuration.getString(CPS_CREDENTIAL_FILE))) {
       // configuration.setString(CPS_SUBSCRIPTION_TOPIC, subscriptionTopic);
@@ -205,6 +260,14 @@ public class CloudPubSubPullTransport extends ThrottleableTransport {
       if (this.subscriber != null) {
          subscriber.stopAsync().awaitTerminated();
       }
+      // ############
+      // Use BlockingQueue to manage Graylog processing
+      // ############
+      // if (pullTaskFuture != null) {
+      // running = false;
+      // pullTaskFuture.cancel(false);
+      // }
+
       // if (this.subscriberStub != null) {
       // subscriberStub.shutdown();
       // }
@@ -263,10 +326,11 @@ public class CloudPubSubPullTransport extends ThrottleableTransport {
          // r.addField(new NumberField(CPS_INTERVAL, "Interval", 10, "Pulling interval in
          // seconds",
          // ConfigurationField.Optional.NOT_OPTIONAL));
- 
-         r.addField(new TextField(CPS_SOURCE_NAME, "Source Name", "",
-         "Override source name. (default gcp-pubsub)", ConfigurationField.Optional.OPTIONAL));
-  return r;
+
+         // r.addField(new TextField(CPS_SOURCE_NAME, "Source Name", "", "Override source
+         // name. (default gcp-pubsub)",
+         // ConfigurationField.Optional.OPTIONAL));
+         return r;
       }
    }
 }

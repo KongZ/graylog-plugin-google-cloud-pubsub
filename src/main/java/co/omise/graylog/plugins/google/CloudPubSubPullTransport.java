@@ -319,7 +319,7 @@ public class CloudPubSubPullTransport extends ThrottleableTransport {
          r.addField(new TextField(CPS_CREDENTIAL_FILE, "Credential file location", "",
                "A Path to the TLS private key file", ConfigurationField.Optional.OPTIONAL));
 
-         r.addField(new NumberField(CPS_NUMBER_OF_MESSAGE, "Message size", 1000, "Maximum number of message to pull"));
+         r.addField(new NumberField(CPS_NUMBER_OF_MESSAGE, "Number of Message", 1000, "Maximum number of message to pull"));
          r.addField(
                new NumberField(CPS_MESSAGE_SIZE, "Message size", 20, "Maximum size of message in Megabytes to pull"));
 

@@ -120,7 +120,7 @@ public class CloudPubSubPullTransport extends ThrottleableTransport {
             // handle incoming message, then ack/nack the received message
             // LOG.info("async: [id={}]{}", message.getMessageId(),
             // message.getData().toStringUtf8());
-            LOG.info("Pubsub ID : {}", message.getMessageId());
+            LOG.trace("Pubsub ID : {}", message.getMessageId());
             input.processRawMessage(new RawMessage(message.getData().toByteArray()));
             consumer.ack();
 

@@ -23,12 +23,12 @@ public class CloudPubSubMetadata implements PluginMetaData {
 
     @Override
     public String getAuthor() {
-        return "Omise co.,ltd.";
+        return "Omise";
     }
 
     @Override
     public URI getURL() {
-        return URI.create("https://www.omise.co");
+        return URI.create("https://github.com/omise/graylog-plugin-google-cloud-pubsub");
     }
 
     @Override

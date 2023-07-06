@@ -20,7 +20,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <graylog.version>2.4.0</graylog.version>
+        <graylog.version>5.0.9</graylog.version>
         <graylog.plugin-dir>/usr/share/graylog-server/plugin</graylog.plugin-dir>
         <auto-service.version>1.0-rc4</auto-service.version>
         <auto-value.version>1.6.3</auto-value.version>
